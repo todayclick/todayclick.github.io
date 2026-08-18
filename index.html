@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Congratulations!</title>
+  <style>
+    :root {
+      --yellow: #ffc900;
+      --yellow-dark: #e5a900;
+      --text: #090909;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body { margin: 0; min-height: 100%; }
+
+    body {
+      display: flex;
+      justify-content: center;
+      background: #fff;
+      color: var(--text);
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    .page {
+      width: 100%;
+      max-width: 414px;
+      min-height: 100vh;
+      padding: 18px 18px 34px;
+      text-align: center;
+      overflow: hidden;
+    }
+
+    .ad-label {
+      width: 20px;
+      height: 20px;
+      display: grid;
+      place-items: center;
+      margin: 0 0 1px -9px;
+      border: 1px solid #d9d9d9;
+      border-radius: 50%;
+      color: #777;
+      font-size: 10px;
+    }
+
+    h1 {
+      margin: 0 0 26px;
+      font-size: 20px;
+      line-height: 1.2;
+      font-weight: 700;
+    }
+
+    .lead {
+      margin: 0 auto 22px;
+      max-width: 340px;
+      font-size: 17px;
+      line-height: 1.38;
+    }
+
+    .description {
+      margin: 0 auto;
+      max-width: 355px;
+      font-size: 17px;
+      line-height: 1.38;
+    }
+
+    .description strong { font-weight: 700; }
+
+    .chest {
+      width: min(100%, 324px);
+      margin: 23px auto 30px;
+      display: block;
+      user-select: none;
+    }
+
+    .cta {
+      display: block;
+      width: min(100%, 301px);
+      margin: 0 auto;
+      padding: 13px 18px 14px;
+      border: 0;
+      border-radius: 28px;
+      background: var(--yellow);
+      box-shadow: 0 3px 0 #111;
+      color: #050505;
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: .1px;
+      text-decoration: none;
+      cursor: pointer;
+      transition: transform .12s ease, background .12s ease;
+    }
+
+    .cta:hover { background: var(--yellow-dark); }
+    .cta:active { transform: translateY(2px); box-shadow: 0 1px 0 #111; }
+
+    @media (max-width: 360px) {
+      .page { padding-left: 14px; padding-right: 14px; }
+      h1 { margin-bottom: 22px; }
+      .lead, .description { font-size: 16px; }
+      .chest { margin-top: 20px; margin-bottom: 26px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <div class="ad-label" aria-label="Anzeige">AD</div>
+
+    <h1>Congratulations!</h1>
+
+    <p class="lead">You could be our next lucky winner!</p>
+
+    <p class="description">
+      Each month, we select 10 users for a chance to win<br>
+      amazing rewards.
+      <br><br>
+      <strong>Follow the instructions and see if luck is on your<br>side!</strong>
+    </p>
+
+    <img class="chest" src="1clicklander.jpg" alt="Goldene Schatzkiste mit Vorhängeschloss">
+
+    <a class="cta" href="https://example.com" aria-label="Try your luck">TRY YOUR LUCK</a>
+  </main>
+</body>
+</html>
