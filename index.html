@@ -108,6 +108,238 @@
 </script>
   <main class="page">
     <h1>Congratulations!</h1>
+	  <!-- Paste this section into the page where the player should appear. -->
+<section class="tc-video-player" aria-label="Video player">
+  <div class="tc-video-frame" id="tc-video-frame">
+    <video id="tc-video" playsinline preload="metadata"></video>
+    <div id="tc-ad-container"></div>
+  </div>
+  <button id="tc-play" type="button" disabled>Video starten</button>
+  <p id="tc-video-status" role="status" aria-live="polite">Video wird geladen …</p>
+</section>
+
+<style>
+  .tc-video-player {
+    width: min(100%, 800px);
+    margin: 24px auto;
+    font: inherit;
+  }
+  .tc-video-frame {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+    background: #111;
+  }
+  #tc-video,
+  #tc-ad-container {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+  #tc-video {
+    display: block;
+    object-fit: contain;
+  }
+  #tc-ad-container {
+    z-index: 2;
+    opacity: 0;
+    pointer-events: none;
+  }
+  .tc-video-frame.is-ad-active #tc-ad-container {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  #tc-play {
+    margin-top: 10px;
+    padding: 10px 18px;
+    cursor: pointer;
+  }
+  #tc-play:disabled {
+    cursor: wait;
+  }
+  #tc-video-status {
+    min-height: 1.4em;
+    margin: 8px 0 0;
+  }
+</style>
+
+<!-- Google IMA renders VAST pre-roll ads over the native HTML5 video. -->
+<script src="https://imasdk.googleapis.com/js/sdkloader/ima3.js"></script>
+<script>
+(() => {
+  // Short MDN sample clip (flower time-lapse). Replace with your own video later.
+  const CONTENT_VIDEO_URL = "https://mdn.github.io/shared-assets/videos/flower.mp4";
+
+  // Deploy worker.js and replace this with its workers.dev URL.
+  const VAST_PROXY_URL = "https://todayclick-vas.test-215.workers.dev/vast";
+
+  const frame = document.getElementById("tc-video-frame");
+  const video = document.getElementById("tc-video");
+  const adContainer = document.getElementById("tc-ad-container");
+  const playButton = document.getElementById("tc-play");
+  const status = document.getElementById("tc-video-status");
+
+  let adDisplayContainer;
+  let adsLoader;
+  let adsManager;
+  let adRequestFailed = false;
+  let adStarted = false;
+
+  if (CONTENT_VIDEO_URL) video.src = CONTENT_VIDEO_URL;
+
+  function startContentWithoutAd(message) {
+    frame.classList.remove("is-ad-active");
+    video.controls = true;
+    playButton.disabled = true;
+    playButton.hidden = true;
+    if (!CONTENT_VIDEO_URL) {
+      status.textContent = `${message} CONTENT_VIDEO_URL muss noch gesetzt werden.`;
+      return;
+    }
+    status.textContent = message;
+    video.play().catch(() => {
+      status.textContent = "Zum Abspielen bitte erneut auf Play drücken.";
+      video.controls = true;
+    });
+  }
+
+  function handleAdError(event) {
+    const error = event && typeof event.getError === "function"
+      ? event.getError()
+      : event;
+    console.warn("VAST/IMA error:", error);
+    adRequestFailed = true;
+    if (adsManager) {
+      try { adsManager.destroy(); } catch (_) {}
+      adsManager = null;
+    }
+    frame.classList.remove("is-ad-active");
+    if (adStarted) {
+      startContentWithoutAd("Die Anzeige konnte nicht geladen werden. Video läuft ohne Anzeige.");
+    } else {
+      playButton.disabled = false;
+      playButton.textContent = "Video ohne Anzeige starten";
+      status.textContent = "Die Anzeige konnte nicht geladen werden.";
+    }
+  }
+
+  function onAdsManagerLoaded(event) {
+    try {
+      adsManager = event.getAdsManager(video);
+      adsManager.addEventListener(
+        google.ima.AdErrorEvent.Type.AD_ERROR,
+        handleAdError
+      );
+      adsManager.addEventListener(
+        google.ima.AdEvent.Type.CONTENT_PAUSE_REQUESTED,
+        () => { video.pause(); }
+      );
+      adsManager.addEventListener(
+        google.ima.AdEvent.Type.CONTENT_RESUME_REQUESTED,
+        () => {
+          frame.classList.remove("is-ad-active");
+          video.controls = true;
+          if (!video.ended) video.play().catch(() => {});
+        }
+      );
+      adsManager.addEventListener(
+        google.ima.AdEvent.Type.LOADED,
+        event => {
+          const ad = event.getAd();
+          if (ad && !ad.isLinear()) video.play().catch(() => {});
+        }
+      );
+      adsManager.addEventListener(
+        google.ima.AdEvent.Type.ALL_ADS_COMPLETED,
+        () => {
+          frame.classList.remove("is-ad-active");
+          video.controls = true;
+        }
+      );
+      playButton.disabled = false;
+      status.textContent = CONTENT_VIDEO_URL
+        ? "Bereit. Video starten, um das Pre-Roll abzuspielen."
+        : "VAST bereit. CONTENT_VIDEO_URL für das Video noch eintragen.";
+    } catch (error) {
+      handleAdError(error);
+    }
+  }
+
+  function initializePlayer() {
+    if (!window.google || !google.ima) {
+      status.textContent = "Das IMA-SDK konnte nicht geladen werden.";
+      playButton.disabled = false;
+      playButton.textContent = "Video ohne Anzeige starten";
+      adRequestFailed = true;
+      return;
+    }
+
+    if (!VAST_PROXY_URL || VAST_PROXY_URL.includes("YOUR-WORKER")) {
+      status.textContent = "Cloudflare-Worker bereitstellen und VAST_PROXY_URL eintragen.";
+      playButton.disabled = false;
+      playButton.textContent = "Video ohne Anzeige starten";
+      adRequestFailed = true;
+      return;
+    }
+
+    adDisplayContainer = new google.ima.AdDisplayContainer(adContainer, video);
+    adsLoader = new google.ima.AdsLoader(adDisplayContainer);
+    adsLoader.addEventListener(
+      google.ima.AdsManagerLoadedEvent.Type.ADS_MANAGER_LOADED,
+      onAdsManagerLoaded
+    );
+    adsLoader.addEventListener(
+      google.ima.AdErrorEvent.Type.AD_ERROR,
+      handleAdError
+    );
+    video.addEventListener("ended", () => adsLoader.contentComplete());
+
+    const request = new google.ima.AdsRequest();
+    request.adTagUrl = VAST_PROXY_URL;
+    request.linearAdSlotWidth = frame.clientWidth || 640;
+    request.linearAdSlotHeight = frame.clientHeight || 360;
+    request.nonLinearAdSlotWidth = frame.clientWidth || 640;
+    request.nonLinearAdSlotHeight = Math.max(80, Math.round(frame.clientHeight * 0.25));
+    request.setAdWillAutoPlay(false);
+    request.setAdWillPlayMuted(false);
+    adsLoader.requestAds(request);
+  }
+
+  playButton.addEventListener("click", () => {
+    if (adRequestFailed || !adsManager) {
+      startContentWithoutAd("Video läuft ohne Anzeige.");
+      return;
+    }
+    if (adStarted) return;
+
+    adStarted = true;
+    playButton.disabled = true;
+    playButton.hidden = true;
+    status.textContent = "Anzeige wird abgespielt …";
+    video.controls = false;
+    frame.classList.add("is-ad-active");
+
+    try {
+      // IMA requires this initialization to happen in the user's play gesture.
+      adDisplayContainer.initialize();
+      adsManager.init(frame.clientWidth, frame.clientHeight, google.ima.ViewMode.NORMAL);
+      adsManager.start();
+    } catch (error) {
+      handleAdError(error);
+    }
+  });
+
+  window.addEventListener("resize", () => {
+    if (!adsManager || !frame.classList.contains("is-ad-active")) return;
+    adsManager.resize(frame.clientWidth, frame.clientHeight, google.ima.ViewMode.NORMAL);
+  });
+
+  initializePlayer();
+})();
+</script>
+
 	  
 	  
 	  <script async="async" data-cfasync="false" src="https://pl30907544.profitableratecpmnetwork.com/92afb5a2f5dd5c12b29b38b256e3cc8e/invoke.js"></script>
