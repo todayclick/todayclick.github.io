@@ -196,12 +196,12 @@
     playButton.disabled = true;
     playButton.hidden = true;
     if (!CONTENT_VIDEO_URL) {
-      status.textContent = `${message} CONTENT_VIDEO_URL muss noch gesetzt werden.`;
+      status.textContent = `${message} CONTENT_VIDEO_URL has to be set.`;
       return;
     }
     status.textContent = message;
     video.play().catch(() => {
-      status.textContent = "Zum Abspielen bitte erneut auf Play drücken.";
+      status.textContent = "Press again play to show.";
       video.controls = true;
     });
   }
@@ -239,13 +239,13 @@
     }
     frame.classList.remove("is-ad-active");
     if (adStarted) {
-      startContentWithoutAd("Die Anzeige konnte nicht geladen werden. Video läuft ohne Anzeige.");
+      startContentWithoutAd("Ad couldn't be shown. Video shows without ad.");
     } else {
       playButton.disabled = false;
-      playButton.textContent = "Video ohne Anzeige starten";
+      playButton.textContent = "Start Video without ad";
       const statusMessage = errorCode === null
-        ? "Die Anzeige konnte nicht geladen werden."
-        : `Anzeige konnte nicht geladen werden (IMA ${errorCode}${vastErrorCode === null ? "" : ` / VAST ${vastErrorCode}`}).`;
+        ? "Ad couldn't load."
+        : `Ad couldn't load (IMA ${errorCode}${vastErrorCode === null ? "" : ` / VAST ${vastErrorCode}`}).`;
       const diagnosticDetails = [
         errorType,
         errorMessage,
@@ -292,8 +292,8 @@
       );
       playButton.disabled = false;
       status.textContent = CONTENT_VIDEO_URL
-        ? "Bereit. Video starten, um das Pre-Roll abzuspielen."
-        : "VAST bereit. CONTENT_VIDEO_URL für das Video noch eintragen.";
+        ? "Ready. Video starts for the Pre-Roll"
+        : "VAST ready. CONTENT_VIDEO_URL for the Video adding.";
     } catch (error) {
       handleAdError(error);
     }
@@ -301,17 +301,17 @@
 
   function initializePlayer() {
     if (!window.google || !google.ima) {
-      status.textContent = "Das IMA-SDK konnte nicht geladen werden.";
+      status.textContent = "The IMA-SDK couldn't load.";
       playButton.disabled = false;
-      playButton.textContent = "Video ohne Anzeige starten";
+      playButton.textContent = "Video starting without ad.";
       adRequestFailed = true;
       return;
     }
 
     if (!VAST_PROXY_URL || VAST_PROXY_URL.includes("YOUR-WORKER")) {
-      status.textContent = "Cloudflare-Worker bereitstellen und VAST_PROXY_URL eintragen.";
+      status.textContent = "Cloudflare-Worker ready and add VAST_PROXY_URL";
       playButton.disabled = false;
-      playButton.textContent = "Video ohne Anzeige starten";
+      playButton.textContent = "Start video without ad";
       adRequestFailed = true;
       return;
     }
@@ -341,7 +341,7 @@
 
   playButton.addEventListener("click", () => {
     if (adRequestFailed || !adsManager) {
-      startContentWithoutAd("Video läuft ohne Anzeige.");
+      startContentWithoutAd("Video starts without ad.");
       return;
     }
     if (adStarted) return;
@@ -349,7 +349,7 @@
     adStarted = true;
     playButton.disabled = true;
     playButton.hidden = true;
-    status.textContent = "Anzeige wird abgespielt …";
+    status.textContent = "Ad is shown …";
     video.controls = false;
     frame.classList.add("is-ad-active");
 
